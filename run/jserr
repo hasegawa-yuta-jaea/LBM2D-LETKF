@@ -1,37 +1,45 @@
 #! /bin/bash -u
 #PBS -q mg32
 #PBS -l select=16:ncpus=48:mpiprocs=4:ompthreads=12:ngpus=4
-#PBS -l walltime=24:0:0
-#PBS -P culb2d@PG22010
+#PBS -l walltime=4:0:0
+#PBS -P culb2d@PG23016
 #PBS -N culb2d
 #PBS -o log/
 #PBS -j oe
+#PBS -m ae
 if [ -n "${PBS_O_WORKDIR:-}" ]; then
     cd $PBS_O_WORKDIR
 fi
 logfile=log/${PBS_JOBNAME:-logfile}.txt
 set -o pipefail
 
+## glocal config
+rloc=1
+daprune=10
+d=230713_letkf_x_uv
+bindiff=true ## maybe always true (for both debug and final experiment)
+iodata=false ## warning: very storage-consuming, use carefully
+do_nudging=false ## usually == is_beta_opt
+is_skip=true
+is_beta_opt=false
+
 { # global block for `tee`
-    is_skip=true
-    is_beta_opt=true
 
     # modules
-    . /etc/profile.d/modules.sh 
-    module purge 
+    . /etc/profile.d/modules.sh
+    module purge
     module load mpt/2.23-ga cuda/11.0 gnu/7.4.0; export MPI_USE_CUDA=1
     module use --append $HOME/ulocal/modulefiles
     module load boost
     module load hdf5/1.8.12
 
-    module list 2>&1 
+    module list 2>&1
 
     # environmental variables
     export MPI_DSM_VERBOSE=1
     export OMP_NUM_THREADS=12
 
     # firstly make EigenG-Batch
-    make clean resultcleanv
     make -C src/EigenG-Batch
 
     env
@@ -42,12 +50,6 @@ set -o pipefail
         beta=$3
         err_rho=$4
         err_u=$5
-        rloc=1
-        daprune=10
-        d=230207_fix_rloc_mat_betaopt
-        bindiff=true
-        iodata=$is_beta_opt ## warning: very storage-consuming, use carefully
-        do_nudging=$is_beta_opt ## usually == is_beta_opt
         iop=$daprune
 
         if $is_beta_opt; then
@@ -67,7 +69,7 @@ set -o pipefail
         touch $RESULT_DIR/.progress
 
         echo =============================================================================
-        echo start run N=$N xyprune=$p err_rho=$err_rho err_u=$err_u beta=$beta 
+        echo start run N=$N xyprune=$p err_rho=$err_rho err_u=$err_u beta=$beta
         echo =============================================================================
 
         # func
@@ -81,6 +83,7 @@ set -o pipefail
 
         ## obs
         make clean resultclean
+        mkdir -p io/nature/ens0000 io/observed/ens0000
         make -j TEST=OBSERVE $da_opts
         run_mpirun 1
         if $bindiff && [ $p -eq 1 ]; then
@@ -97,6 +100,7 @@ set -o pipefail
         if $do_nudging; then
             ## nudging
             make clean
+            mkdir -p io/calc/ens0000
             make -j TEST=DA_NUDGING $da_opts
             run_mpirun 1
             if $bindiff; then
@@ -112,6 +116,7 @@ set -o pipefail
 
             ## noda
             make clean
+            mkdir -p io/calc/ens0000
             make -j TEST=DA_DUMMY $da_opts
             run_mpirun 1
             if $bindiff; then
@@ -128,8 +133,10 @@ set -o pipefail
 
         ## letkf
         make clean
+        mkdir -p io/calc/ens{0000..1023}
         make -j TEST=DA_LETKF $da_opts LETKF_COVINF=$beta
         run_mpirun $N
+        find io/calc/ -depth -empty -delete
         if $bindiff; then
             mkdir -p $RESULT_DIR/letkf$N
             make -C ensemble_stat test N=$N
@@ -150,34 +157,40 @@ set -o pipefail
         # opt
         err_rho=0.01
         err_u=0.1
-        run 64  1 1    $err_rho $err_u
-        run 64  2 1    $err_rho $err_u
-        run 64  4 1    $err_rho $err_u
-        run 64  8 1    $err_rho $err_u
-        run 64 16 1    $err_rho $err_u
-        run 64 32 1    $err_rho $err_u
-        run 64 64 1.02 $err_rho $err_u
+        echo beta is not opt yet >&2
+        exit 1
+        #run 64  1 1.1 $err_rho $err_u
+        #run 64  1 1.1 $err_rho $err_u
+        #run 64  2 1.1 $err_rho $err_u
+        #run 64  4 1.1 $err_rho $err_u
+        #run 64  8 1.1 $err_rho $err_u
+        #run 64 16 1.1 $err_rho $err_u
+        #run 64 32 1.1 $err_rho $err_u
+        #run 64 64 1.1 $err_rho $err_u
 
-        run 16  1 1    $err_rho $err_u
-        run 16  2 1    $err_rho $err_u
-        run 16  4 1    $err_rho $err_u
-        run 16  8 1.01 $err_rho $err_u
-        run 16 16 1.01 $err_rho $err_u
-        run 16 32 1.03 $err_rho $err_u
+        #run 16  1 1.1 $err_rho $err_u
+        #run 16  2 1.1 $err_rho $err_u
+        #run 16  4 1.1 $err_rho $err_u
+        #run 16  8 1.1 $err_rho $err_u
+        #run 16 16 1.1 $err_rho $err_u
+        #run 16 32 1.1 $err_rho $err_u
+        #run 16 64 1.1 $err_rho $err_u
 
-        run  4  1 1.07 $err_rho $err_u
-        run  4  2 1.05 $err_rho $err_u
-        run  4  4 1.05 $err_rho $err_u
-        run  4  8 1.09 $err_rho $err_u
-        run  4 16 1.24 $err_rho $err_u
+        #run  4  1 1.1 $err_rho $err_u
+        #run  4  2 1.1 $err_rho $err_u
+        #run  4  4 1.1 $err_rho $err_u
+        #run  4  8 1.1 $err_rho $err_u
+        #run  4 16 1.1 $err_rho $err_u
+        #run  4 32 1.1 $err_rho $err_u
+        #run  4 64 1.1 $err_rho $err_u
     else
         # params scan
         bb="1 1.01 1.02 1.03 1.04 1.05 1.06 1.07 1.08 1.09 1.1 1.11 1.12 1.13 1.14 1.15 1.16 1.17 1.18 1.19 1.2 1.21 1.22 1.23 1.24 1.25 1.26 1.27 1.28 1.29 1.3 1.31 1.32 1.33 1.34 1.35 1.36 1.37 1.38 1.39 1.4 1.41 1.42 1.43 1.44 1.45 1.46 1.47 1.48 1.49 1.5"
-        pp="16"
+        pp="1 2 4 8 16 32 64"
         NN="64 16 4"
         err_rho=0.01
         err_u=0.1
-        for N in $NN; do for beta in $bb; do for p in $pp; do 
+        for N in $NN; do for beta in $bb; do for p in $pp; do
             run $N $p $beta $err_rho $err_u
         done done done
     fi
