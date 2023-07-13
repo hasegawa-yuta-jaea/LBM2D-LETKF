@@ -19,8 +19,8 @@ public:
     using letkf_real = float;
     #endif
 private:
-    util::device_memory<real> uo, vo, ro; // observation
-    std::vector<real> uo_host, vo_host, ro_host; // observation buffer for MPI (overlapped)
+    util::device_memory<real> uo, vo, ro, fo; // observation
+    std::vector<real> uo_host, vo_host, ro_host, fo_host; // observation buffer for MPI (overlapped)
     #ifdef DA_LETKF
     util::letkf_solver<letkf_real> solver;
     util::device_memory<letkf_real> xk, yk; // LETKF buffer: k-th column of X, Y
@@ -46,18 +46,13 @@ public: // private member function but public due to workaround of cuda_device_l
 public:
     void assimilate_nudging_lbm(data& dat, const int t);
     void assimilate_nudging_uv(data& dat, const int t);
-    void assimilate_letkf_lbm(data& dat, const util::mpi& mpi, const int t);
-    void assimilate_letkf_uv(data& dat, const util::mpi& mpi, const int t);
+    void assimilate_letkf(data& dat, const util::mpi& mpi, const int t);
 
 public:
     // wrapper of assimilate_*()
     void assimilate(data& dat, const util::mpi& mpi, const int t) {
         #ifdef DA_LETKF
-            #if defined(DA_OBS_UV) || defined(DA_OBS_RUV)
-            assimilate_letkf_uv(dat, mpi, t);
-            #else
-            assimilate_letkf_lbm(dat, mpi, t);
-            #endif
+            assimilate_letkf(dat, mpi, t);
         #elif defined(DA_NUDGING)
             #if defined(DA_OBS_UV) || defined(DA_OBS_RUV)
             assimilate_nudging_uv(dat, t);

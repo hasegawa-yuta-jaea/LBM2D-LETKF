@@ -35,6 +35,9 @@ void DataAssimilator::init_nudging() {
     uo_host.resize(nxy);
     vo_host.resize(nxy);
     ro_host.resize(nxy);
+    constexpr auto nxyq = config::nx * config::ny * config::Q;
+    fo.reallocate(nxyq);
+    fo_host.resize(nxyq);
 }
 
 void DataAssimilator::assimilate_nudging_uv(data& dat, const int t) {
@@ -141,7 +144,6 @@ void DataAssimilator::assimilate_nudging_uv(data& dat, const int t) {
 
 }
 
-#if 0
 void DataAssimilator::assimilate_nudging_lbm(data& dat, const int t) {
     if(config::verbose >= 1)  { std::cout << __PRETTY_FUNCTION__ << ": t=" << t << std::endl; }
     auto step = t / config::iiter;
@@ -151,14 +153,16 @@ void DataAssimilator::assimilate_nudging_lbm(data& dat, const int t) {
     auto* rho = dat.d().r.data();
     auto* u = dat.d().r.data();
     auto* v = dat.d().r.data();
-    auto* df = this->obse.data();
+    auto* fo = this->fo.ptr();
+    auto* fo_host = this->fo_host.data();
 
 
     { /// load observation f
-        auto fname = "io/observed/0/f_" + std::to_string(step) + ".dat";
+        auto fname = "io/observed/ens0000/f_step" + util::to_string_aligned(step, 10) + ".dat";
         auto file = std::ifstream(fname, std::ios::binary);
-        auto size = config::nx * config::ny * config::Q;
-        runtime_assert(file.read(reinterpret_cast<char*>(df), sizeof(real) * size), "IOError: could not open file: " + fname);
+        runtime_assert(file.is_open(), "IOError: could not open file: " + fname);
+        file.read(reinterpret_cast<char*>(fo_host), sizeof(real) * config::nx * config::ny);
+        CUDA_SAFE_CALL(cudaMemcpy(fo, fo_host, sizeof(real) * config::nx * config::ny * config::Q, cudaMemcpyHostToDevice));
     }
 
     port::pfor3d<backend>(
@@ -176,7 +180,7 @@ void DataAssimilator::assimilate_nudging_lbm(data& dat, const int t) {
                 real alpha_alpha = alpha;
                 if(xyprune == 1 or !da_w_itp) {
                     for(int q=0; q<config::Q; q++) {
-                        f_obse[q] = df[config::ijq(ij, q)];
+                        f_obse[q] = fo[config::ijq(ij, q)];
                     }
                 } else {
                     // 観測xypruneして線形補間
@@ -187,13 +191,14 @@ void DataAssimilator::assimilate_nudging_lbm(data& dat, const int t) {
                     const auto ir = (i - iw) / real(xyprune);
                     const auto jr = (j - js) / real(xyprune);
                     for(int q=0; q<config::Q; q++) {
-                        f_obse[q] = (1.-ir)*(1.-jr)*df[config::ijq(iw, js, q)]
-                                    + ir*(1.-jr)   *df[config::ijq(ie, js, q)]
-                                    + (1.-ir)*jr   *df[config::ijq(iw, jn, q)]
-                                    + ir*jr        *df[config::ijq(ie, jn, q)];
+                        f_obse[q] = (1.-ir)*(1.-jr)*fo[config::ijq(iw, js, q)]
+                                    + ir*(1.-jr)   *fo[config::ijq(ie, js, q)]
+                                    + (1.-ir)*jr   *fo[config::ijq(iw, jn, q)]
+                                    + ir*jr        *fo[config::ijq(ie, jn, q)];
                         //alpha_alpha = alpha * sqrt(1e-6 + (0.5-ir)*(0.5-ir) + (0.5-jr)*(0.5-jr)) / 0.5*1.412;
                         //alpha_alpha /= xyprune;
                     }
+                    // TODO: sphere core nudging (flat itp)
                 }
 
                 // nudging update
@@ -214,6 +219,5 @@ void DataAssimilator::assimilate_nudging_lbm(data& dat, const int t) {
     );
 
 }
-#endif
 
 #endif
