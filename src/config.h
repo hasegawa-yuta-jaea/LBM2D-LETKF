@@ -40,8 +40,11 @@
 #error select DA_LETKF or DA_NUDGING
 #endif
 
-//#define DA_OBS_UV
+// XXX
+//#define DA_OBS_F
+//#define DA_OBS_UV  // XXX deprecated
 #define DA_OBS_RUV
+#define LETKF_X_RUV
 
 #ifdef DA_LETKF
 #define ENSEMBLE_STAT
@@ -74,7 +77,7 @@
 #define FORCE_TURB
 
 // observation error via lbm or uv
-#define OBSERVE_ERROR_RUV // in RUV mode, observation of f[q] is unavailable
+//#define OBSERVE_ERROR_RUV // in RUV mode, observation of f[q] is unavailable
 #define OBS_XYPRUNE_NAN // set nan on pruned data
 
 // log level
@@ -132,7 +135,7 @@ constexpr int scaler = SCALER;
 constexpr int iiter = 5 * scaler; // output interval
 #ifdef SPINUP
 // XXX
-constexpr int spinup = 100000 * iiter; // cold start duration
+constexpr int spinup = 10000 * iiter; // cold start duration
 #endif
 constexpr int ioprune = IOPRUNE; // sosika
 constexpr int daprune = DAPRUNE; // sosika
@@ -187,6 +190,7 @@ constexpr real da_nud_rate = 0.1; // nudging rate: by predactibility time t_pred
 #   if defined(OBS_ERROR_RHO) && defined(OBS_ERROR_U)
         constexpr real obs_error_rho0 = OBS_ERROR_RHO;
         constexpr real obs_error_u = OBS_ERROR_U;
+        constexpr real obs_error_f = OBS_ERROR_U * 0.3;  // obs_error_u_eff = 3.3 * obs_error_f ??
 #   else
 #       error OBS_ERROR_RHO and OBS_ERROR_U should be defined in makefile.macro.in
 #   endif
