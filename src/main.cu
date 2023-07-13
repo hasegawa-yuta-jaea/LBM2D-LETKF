@@ -17,7 +17,7 @@
 #include "util/cuda_safe_call.hpp"
 #include "util/timer.hpp"
 
-constexpr int gpu_per_node = 8;
+constexpr int gpu_per_node = 4;
 
 int main(int argc, char** argv) try {
     MPI_Init(&argc, &argv);
@@ -39,12 +39,12 @@ int main(int argc, char** argv) try {
     mpi.barrier();
 
     // ensemble offset
-    const auto ofs_rank = 
+    const auto ofs_rank =
         args.size() >= 1
         ? boost::lexical_cast<int>(args.at(0))
         : 0;
 
-    // 
+    //
     #ifdef PORT_CUDA
     CUDA_SAFE_CALL(cudaSetDevice(mpi.rank() % gpu_per_node));
     #endif
@@ -65,7 +65,7 @@ int main(int argc, char** argv) try {
     if(mpi.rank() == 0) { std::cout << "spin-up ..." << std::endl; }
     for(const auto t: util::range(config::spinup)) {
         update(dat, t - config::spinup);
-        if(mpi.rank() == 0 && t % (config::spinup/100)==0) { std::cout << "." << std::flush; }
+        if(mpi.rank() == 0 && t % (config::spinup/100)==0) { std::cout << "spin-up t = " << t << " / " << config::spinup << std::endl; }
     }
     if(mpi.rank() == 0) { std::cout << std::endl << "spin-up finished" << std::endl; }
     #endif
@@ -92,11 +92,11 @@ int main(int argc, char** argv) try {
         #endif
 
         #if defined(DATA_ASSIMILATION) && !defined(DA_DUMMY)
-        timer.transit("DA");
         if(t > 0) {
+            timer.transit("DA");
             dataAssimilator.assimilate(dat, mpi, t);
+            timer.transit("_sync.DA"); mpi.barrier();
         }
-        timer.transit("_sync.DA"); mpi.barrier();
         #endif
 
         #ifndef NO_OUTPUT
@@ -104,7 +104,7 @@ int main(int argc, char** argv) try {
         output(dat, mpi, t);
         timer.transit("_sync.output"); mpi.barrier();
         #endif
-         
+
         timer.transit("forecast");
         for(const auto t: util::range(tt * config::iiter, (tt+1) * config::iiter)) {
             const auto per = config::iiter > 100 ? config::iiter/100 : 1;
