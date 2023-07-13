@@ -3,7 +3,7 @@
 # top-most EditorConfig file
 root = true
 
-# Unix-style
+# defaults
 [*]
 charset = utf-8
 indent_style = space
