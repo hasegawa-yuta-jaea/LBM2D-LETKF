@@ -6,7 +6,7 @@
 Computation is fully implemented in NVIDIA GPU by using CUDA, cuBLAS, cuSOLVER.
 The problem size of the test is typically 256 x 256 grid points with {4,16,64} ensembles, where the required number of GPUs is equal to the ensemble size (4, 16, or 64 GPUs).
 
-This microbenchmark code has been developed to test the capability of ensemble data assimilation to `CityLBM`;
+This microbenchmark code has been developed to test the capability of ensemble data assimilation to `CityLBM`.
 `CityLBM` is an application for real-time high-resolution simulation of urban wind flow and plume dispersion. 
 See [our publication [Onodera2021]](https://doi.org/10.1007/s10546-020-00594-x) for detail.
 
