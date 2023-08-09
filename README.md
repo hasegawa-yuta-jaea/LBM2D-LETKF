@@ -3,7 +3,7 @@
 <img width=480 src=doc/header.png />
 
 `LBM2D-LETKF` is a microbenchmark code for ensemble data assimilation of turbulent flow using the 2D lattice Boltzmann method (LBM) and local ensemble transform Kalman filter (LETKF).
-Computation is fully implemented in NVIDIA GPU by using CUDA.
+Computation is fully implemented in NVIDIA GPU by using CUDA, cuBLAS, cuSOLVER.
 The problem size of the test is typically 256 x 256 grid points with {4,16,64} ensembles, where the required number of GPUs is equal to the ensemble size (4, 16, or 64 GPUs).
 
 This microbenchmark code has been developed to test the capability of ensemble data assimilation to `CityLBM`;
