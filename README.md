@@ -154,7 +154,22 @@ The result is, for instance,
 
 Besides, examples of performance evaluations at Wisteria-A can be found in [doc/result_example/aquarius](doc/result_example/aquarius).
 
-## Citation
+## Publication
 
 1. Y. Hasegawa, T. Imamura, T. Ina, N. Onodera, Y. Asahi, and Y. Idomura, "GPU Optimization of Lattice Boltzmann Method with Local Ensemble Transform Kalman Filter," in *2022 IEEE/ACM Workshop on Latest Advances in Scalable Algorithms for Large-Scale Heterogeneous Systems (ScalAH)*, pp. 10-17, 2022. \[doi:[10.1109/ScalAH56622.2022.00007](https://doi.org/10.1109/ScalAH56622.2022.00007), arXiv:[2308.03310](https://arxiv.org/abs/2308.03310), Version of code: [`LBM2D-LETKF:v2.4.4`](https://github.com/hasegawa-yuta-jaea/LBM2D-LETKF/releases/tag/v2.4.4)\]
 1. Y. Hasegawa, N. Onodera, Y. Asahi, T. Ina, T. Imamura, and Y. Idomura, "Continuous data assimilation of large eddy simulation by lattice Boltzmann method and local ensemble transform Kalman filter (LBM-LETKF)," *submitted*. \[arXiv:[2308.03972](https://arxiv.org/abs/2308.03972), Version of code: [`LBM2D-LETKF:v3.0.5`](https://github.com/hasegawa-yuta-jaea/LBM2D-LETKF/releases/tag/v3.0.5)\]
+
+
+## Cite us
+
+```bibtex
+@inproceedings{Hasegawa2022,
+    title = {{GPU Optimization of Lattice Boltzmann Method with Local Ensemble Transform Kalman Filter}},
+    year = {2022},
+    booktitle = {IEEE/ACM Workshop on Latest Advances in Scalable Algorithms for Large-Scale Heterogeneous Systems (ScalAH)},
+    author = {Hasegawa, Yuta and Imamura, Toshiyuki and Ina, Takuya and Onodera, Naoyuki and Asahi, Yuuichi and Idomura, Yasuhiro},
+    pages = {10--17},
+    doi = {10.1109/ScalAH56622.2022.00007},
+    arxivId = {2308.03310}
+}
+```
