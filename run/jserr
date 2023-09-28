@@ -2,8 +2,8 @@
 #PBS -q mg32
 #PBS -l select=16:ncpus=48:mpiprocs=4:ompthreads=12:ngpus=4
 #PBS -l walltime=24:0:0
-#PBS -P culb2d@PG22010
-#PBS -N culb2d
+#PBS -P culb2d@PG23016
+#PBS -N fdr_rev
 #PBS -o log/
 #PBS -j oe
 if [ -n "${PBS_O_WORKDIR:-}" ]; then
@@ -12,9 +12,18 @@ fi
 logfile=log/${PBS_JOBNAME:-logfile}.txt
 set -o pipefail
 
+# global
+is_skip=false
+d=230927_fdr_gamma_opt/cusolver
+
+  ## maybe unchanged
+rloc=1
+daprune=10
+iop=$daprune
+bindiff=true
+iodata=false ## warning: very storage-consuming, use carefully
+
 { # global block for `tee`
-    is_skip=true
-    is_beta_opt=true
 
     # modules
     . /etc/profile.d/modules.sh 
@@ -30,31 +39,15 @@ set -o pipefail
     export MPI_DSM_VERBOSE=1
     export OMP_NUM_THREADS=12
 
-    # firstly make EigenG-Batch
-    make clean resultcleanv
-    make -C src/EigenG-Batch
-
-    env
-
     run () {
         N=$1
         p=$2
         beta=$3
-        err_rho=$4
-        err_u=$5
-        rloc=1
-        daprune=10
-        d=230207_fix_rloc_mat_betaopt
-        bindiff=true
-        iodata=$is_beta_opt ## warning: very storage-consuming, use carefully
-        do_nudging=$is_beta_opt ## usually == is_beta_opt
-        iop=$daprune
+        gamma=$4
+        err_rho=$5
+        err_u=$6
 
-        if $is_beta_opt; then
-            local RESULT_DIR=result/$d/ens${N}/xyprune${p}/errrho_${err_rho}_erru${err_u}/beta_opt
-        else
-            local RESULT_DIR=result/$d/ens${N}/xyprune${p}/errrho_${err_rho}_erru${err_u}/beta${beta}
-        fi
+        local RESULT_DIR=result/$d/ens${N}/xyprune${p}
         mkdir -p $RESULT_DIR
         if $is_skip && [ -f "$RESULT_DIR/.complete" ]; then
             echo $RESULT_DIR: already completed. skip.
@@ -70,14 +63,13 @@ set -o pipefail
         echo start run N=$N xyprune=$p err_rho=$err_rho err_u=$err_u beta=$beta 
         echo =============================================================================
 
-        # func
+        # machine-dependent mpirun options
         run_mpirun() {
             mpirun -np $1 omplace run/a.out
         }
 
-
         ## config
-        da_opts="DA_XYPRUNE=$p DAPRUNE=$daprune IOPRUNE=$iop OBS_ERROR_RHO=$err_rho OBS_ERROR_U=$err_u LETKF_RLOC_LEN=$rloc"
+        da_opts="DA_XYPRUNE=$p DAPRUNE=$daprune IOPRUNE=$iop OBS_ERROR_RHO=$err_rho OBS_ERROR_U=$err_u"
 
         ## obs
         make clean resultclean
@@ -94,41 +86,42 @@ set -o pipefail
             find $RESULT_DIR/io_obs/ -depth -empty -delete
         fi
 
-        if $do_nudging; then
-            ## nudging
-            make clean
-            make -j TEST=DA_NUDGING $da_opts
-            run_mpirun 1
-            if $bindiff; then
-                make -C bindiff test_calc
-                mv -v bindiff/test/test_cal.csv $RESULT_DIR/test_cal_nudging.csv
-                make -C bindiff D=RMSE_RHO test_calc
-                mv -v bindiff/test/test_cal.csv $RESULT_DIR/test_cal_nudging_rho.csv
-            fi
-            if $iodata; then
-                rsync -auv io/ $RESULT_DIR/io_nud/
-                find $RESULT_DIR/io_nud/ -depth -empty -delete
-            fi
+        ## nudging
+        make clean
+        git clean -fx io/calc/
+        make -j TEST=DA_NUDGING $da_opts 
+        run_mpirun 1
+        if $bindiff; then
+            make -C bindiff test_calc
+            mv -v bindiff/test/test_cal.csv $RESULT_DIR/test_cal_nudging.csv
+            make -C bindiff D=RMSE_RHO test_calc
+            mv -v bindiff/test/test_cal.csv $RESULT_DIR/test_cal_nudging_rho.csv
+        fi
+        if $iodata; then
+            rsync -auv io/ $RESULT_DIR/io_nud/
+            find $RESULT_DIR/io_nud/ -depth -empty -delete
+        fi
 
-            ## noda
-            make clean
-            make -j TEST=DA_DUMMY $da_opts
-            run_mpirun 1
-            if $bindiff; then
-                make -C bindiff test_calc
-                mv -v bindiff/test/test_cal.csv $RESULT_DIR/test_cal_noda.csv
-                make -C bindiff D=RMSE_RHO test_calc
-                mv -v bindiff/test/test_cal.csv $RESULT_DIR/test_cal_noda_rho.csv
-            fi
-            if $iodata; then
-                rsync -auv io/ $RESULT_DIR/io_noda/
-                find $RESULT_DIR/io_noda/ -depth -empty -delete
-            fi
+        ## no data assimilation
+        make clean
+        git clean -fx io/calc/
+        make -j TEST=DA_DUMMY $da_opts
+        run_mpirun 1
+        if $bindiff; then
+            make -C bindiff test_calc
+            mv -v bindiff/test/test_cal.csv $RESULT_DIR/test_cal_noda.csv
+            make -C bindiff D=RMSE_RHO test_calc
+            mv -v bindiff/test/test_cal.csv $RESULT_DIR/test_cal_noda_rho.csv
+        fi
+        if $iodata; then
+            rsync -auv io/ $RESULT_DIR/io_noda/
+            find $RESULT_DIR/io_noda/ -depth -empty -delete
         fi
 
         ## letkf
         make clean
-        make -j TEST=DA_LETKF $da_opts LETKF_COVINF=$beta
+        git clean -fx io/calc/
+        make -j TEST=DA_LETKF $da_opts LETKF_COVINF=$beta LETKF_RLOC_LEN=$rloc
         run_mpirun $N
         if $bindiff; then
             mkdir -p $RESULT_DIR/letkf$N
@@ -144,42 +137,33 @@ set -o pipefail
         ## checkpoint
         rm $RESULT_DIR/.progress
         touch $RESULT_DIR/.complete
+
+        ## clean
+        make resultclean
     }
 
-    if $is_beta_opt; then
-        # opt
-        err_rho=0.01
-        err_u=0.1
-        run 64  1 1    $err_rho $err_u
-        run 64  2 1    $err_rho $err_u
-        run 64  4 1    $err_rho $err_u
-        run 64  8 1    $err_rho $err_u
-        run 64 16 1    $err_rho $err_u
-        run 64 32 1    $err_rho $err_u
-        run 64 64 1.02 $err_rho $err_u
+    # run optimal cases
+    err_rho=0.01
+    err_u=0.1
+    run 64  1 1    0.11 $err_rho $err_u
+    run 64  2 1    0.11 $err_rho $err_u
+    run 64  4 1    0.12 $err_rho $err_u
+    run 64  8 1    0.19 $err_rho $err_u
+    run 64 16 1    0.22 $err_rho $err_u
+    run 64 32 1    0.31 $err_rho $err_u
+    run 64 64 1.02 0.22 $err_rho $err_u
 
-        run 16  1 1    $err_rho $err_u
-        run 16  2 1    $err_rho $err_u
-        run 16  4 1    $err_rho $err_u
-        run 16  8 1.01 $err_rho $err_u
-        run 16 16 1.01 $err_rho $err_u
-        run 16 32 1.03 $err_rho $err_u
+    run 16  1 1    0.11 $err_rho $err_u
+    run 16  2 1    0.11 $err_rho $err_u
+    run 16  4 1    0.12 $err_rho $err_u
+    run 16  8 1.01 0.22 $err_rho $err_u
+    run 16 16 1.01 0.31 $err_rho $err_u
+    run 16 32 1.03 0.22 $err_rho $err_u
 
-        run  4  1 1.07 $err_rho $err_u
-        run  4  2 1.05 $err_rho $err_u
-        run  4  4 1.05 $err_rho $err_u
-        run  4  8 1.09 $err_rho $err_u
-        run  4 16 1.24 $err_rho $err_u
-    else
-        # params scan
-        bb="1 1.01 1.02 1.03 1.04 1.05 1.06 1.07 1.08 1.09 1.1 1.11 1.12 1.13 1.14 1.15 1.16 1.17 1.18 1.19 1.2 1.21 1.22 1.23 1.24 1.25 1.26 1.27 1.28 1.29 1.3 1.31 1.32 1.33 1.34 1.35 1.36 1.37 1.38 1.39 1.4 1.41 1.42 1.43 1.44 1.45 1.46 1.47 1.48 1.49 1.5"
-        pp="16"
-        NN="64 16 4"
-        err_rho=0.01
-        err_u=0.1
-        for N in $NN; do for beta in $bb; do for p in $pp; do 
-            run $N $p $beta $err_rho $err_u
-        done done done
-    fi
+    run  4  1 1.07 0.11 $err_rho $err_u
+    run  4  2 1.05 0.11 $err_rho $err_u
+    run  4  4 1.05 0.12 $err_rho $err_u
+    run  4  8 1.09 0.19 $err_rho $err_u
+    run  4 16 1.24 0.22 $err_rho $err_u
 
 } |& tee $logfile

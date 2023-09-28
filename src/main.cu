@@ -17,7 +17,7 @@
 #include "util/cuda_safe_call.hpp"
 #include "util/timer.hpp"
 
-constexpr int gpu_per_node = 8;
+constexpr int gpu_per_node = 4;
 
 int main(int argc, char** argv) try {
     MPI_Init(&argc, &argv);

@@ -64,6 +64,10 @@
 #define DA_QUADRA 0
 #endif
 
+#ifndef DA_NUD_RATE
+#define DA_NUD_RATE 0.1
+#endif
+
 //#define DA_DUMMY // no DA; just for debug
 #ifdef DA_DUMMY
 #define DATA_ASSIMILATION
@@ -180,7 +184,7 @@ constexpr real u_ref = 1;
 // data assimilation parameter
 constexpr int da_xyprune = DA_XYPRUNE;
 constexpr int da_quadra = DA_QUADRA;
-constexpr real da_nud_rate = 0.1; // nudging rate: by predactibility time t_pred and DA interval t_DA: = t_pred / t_DA
+constexpr real da_nud_rate = DA_NUD_RATE;
 
 // observation error in data assimilation
 #if defined(OBSERVE) || defined(DATA_ASSIMILATION)

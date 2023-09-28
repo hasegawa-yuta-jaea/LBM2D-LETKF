@@ -32,6 +32,10 @@ ifneq ("$(DA_QUADRA)","")
 CXXFLAGS += -D DA_QUADRA=$(DA_QUADRA)
 endif
 
+ifneq ("$(DA_NUD_RATE)","")
+CXXFLAGS += -D DA_NUD_RATE=$(DA_NUD_RATE)
+endif
+
 ifneq ("$(LETKF_COVINF)","")
 CXXFLAGS += -D LETKF_COVINF=$(LETKF_COVINF)
 endif

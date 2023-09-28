@@ -9,7 +9,7 @@ url=https://www.r-ccs.riken.jp/labs/lpnctrt/projects/eigengbatched/$code-$versio
 srcdir=src/$code-$version
 make -C $srcdir
 
-cat > makefile.$code.in << EOT
+cat > config/makefile.$code.in << EOT
 ### EigenG
 CXXFLAGS += -I $srcdir -D USE_EIGENG_BATCHED
 LDFLAGS += -L $srcdir -l eigenGbatch

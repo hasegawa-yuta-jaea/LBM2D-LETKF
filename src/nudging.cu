@@ -41,6 +41,7 @@ void DataAssimilator::assimilate_nudging_uv(data& dat, const int t) {
     if(config::verbose >= 1)  { std::cout << __PRETTY_FUNCTION__ << ": t=" << t << std::endl; }
     auto step = t / config::iiter;
     if(step % timeprune != 0) { std::cout << __PRETTY_FUNCTION__ << ": t=" << t << ": skip" << std::endl; return; }
+    std::cout << __PRETTY_FUNCTION__ << ": nudging_rate=" << alpha << std::endl;
 
     auto* f = dat.d().f.data();
     auto* rho = dat.d().r.data();
