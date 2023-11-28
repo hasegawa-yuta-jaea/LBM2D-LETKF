@@ -156,8 +156,8 @@ Besides, examples of performance evaluations at Wisteria-A can be found in [doc/
 
 ## Publication
 
-1. Y. Hasegawa, T. Imamura, T. Ina, N. Onodera, Y. Asahi, and Y. Idomura, "GPU Optimization of Lattice Boltzmann Method with Local Ensemble Transform Kalman Filter," in *2022 IEEE/ACM Workshop on Latest Advances in Scalable Algorithms for Large-Scale Heterogeneous Systems (ScalAH)*, pp. 10-17, 2022. \[doi:[10.1109/ScalAH56622.2022.00007](https://doi.org/10.1109/ScalAH56622.2022.00007), arXiv:[2308.03310](https://arxiv.org/abs/2308.03310), Version of code: [`LBM2D-LETKF:v2.4.4`](https://github.com/hasegawa-yuta-jaea/LBM2D-LETKF/releases/tag/v2.4.4)\]
-1. Y. Hasegawa, N. Onodera, Y. Asahi, T. Ina, T. Imamura, and Y. Idomura, "Continuous data assimilation of large eddy simulation by lattice Boltzmann method and local ensemble transform Kalman filter (LBM-LETKF)," *Fluid Dynamics Research*, vol. 55, p. 065501. \[doi:[10.1088/1873-7005/ad06bd](https://doi.org/10.1088/1873-7005/ad06bd), arXiv:[2308.03972](https://arxiv.org/abs/2308.03972), Version of code: [`LBM2D-LETKF:v3.0.6`](https://github.com/hasegawa-yuta-jaea/LBM2D-LETKF/releases/tag/v3.0.6)\]
+1. Y. Hasegawa, T. Imamura, T. Ina, N. Onodera, Y. Asahi, and Y. Idomura, "GPU Optimization of Lattice Boltzmann Method with Local Ensemble Transform Kalman Filter," in *2022 IEEE/ACM Workshop on Latest Advances in Scalable Algorithms for Large-Scale Heterogeneous Systems (ScalAH)*, pp. 10-17, 2022. \[doi:[10.1109/ScalAH56622.2022.00007](https://doi.org/10.1109/ScalAH56622.2022.00007), arXiv:[2308.03310](https://arxiv.org/abs/2308.03310), code: [`LBM2D-LETKF:v2.4.4`](https://github.com/hasegawa-yuta-jaea/LBM2D-LETKF/releases/tag/v2.4.4)\]
+1. Y. Hasegawa, N. Onodera, Y. Asahi, T. Ina, T. Imamura, and Y. Idomura, "Continuous data assimilation of large eddy simulation by lattice Boltzmann method and local ensemble transform Kalman filter (LBM-LETKF)," *Fluid Dynamics Research*, vol. 55, p. 065501. \[doi:[10.1088/1873-7005/ad06bd](https://doi.org/10.1088/1873-7005/ad06bd), arXiv:[2308.03972](https://arxiv.org/abs/2308.03972), code: [`LBM2D-LETKF:v3.0.6`](https://github.com/hasegawa-yuta-jaea/LBM2D-LETKF/releases/tag/v3.0.6)\]
 
 
 ## Cite us
@@ -176,6 +176,9 @@ Besides, examples of performance evaluations at Wisteria-A can be found in [doc/
     title = {{Continuous data assimilation of large eddy simulation by lattice Boltzmann method and local ensemble transform Kalman filter (LBM-LETKF)}},
     year = {2023},
     journal = {Fluid Dynamics Research},
+    volume = {55},
+    number = {6},
+    pages = {065501},
     author = {Hasegawa, Yuta and Imamura, Toshiyuki and Ina, Takuya and Onodera, Naoyuki and Asahi, Yuuichi and Idomura, Yasuhiro},
     doi = {10.1088/1873-7005/ad06bd},
     arxivId = {2308.03972}
